@@ -15,10 +15,13 @@ object Device {
 
 	sealed trait Command
 	final case class ReadTemperature(requestId: Long, replyTo: ActorRef[RespondTemperature]) extends Command
-	final case class RespondTemperature(requestId: Long, value: Option[Double])
+	final case class RespondTemperature(requestId: Long, deviceId: String, value: Option[Double])
 
 	final case class RecordTemperature(requestId: Long, value: Double, replyTo: ActorRef[TemperatureRecorded]) extends Command
 	final case class TemperatureRecorded(requestId: Long)
+
+	// For testing purposes
+	case object Passivate extends Command
 }
 
 class Device(context: ActorContext[Device.Command], groupId: String, deviceId: String) extends AbstractBehavior[Device.Command](context) {
@@ -36,8 +39,12 @@ class Device(context: ActorContext[Device.Command], groupId: String, deviceId: S
 				this
 
 			case ReadTemperature(requestId, replyTo) => 
-				replyTo ! RespondTemperature(requestId, lastTemperatureReading)
+				replyTo ! RespondTemperature(requestId, deviceId, lastTemperatureReading)
 				this
+			
+			// For testing purposes
+			case Passivate => 
+				Behaviors.stopped
 		}
 	}
 
